@@ -1,0 +1,8 @@
+{
+  "properties": [
+    {
+      "name": "wiki.dictionary.baseUri",
+      "type": "java.lang.String",
+      "description": "Description for wiki.dictionary.baseUri."
+  }
+] }
