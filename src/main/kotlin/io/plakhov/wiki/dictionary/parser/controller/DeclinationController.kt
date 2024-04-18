@@ -12,7 +12,7 @@ class DeclinationController(
 ) {
 
     @GetMapping("/{word}")
-    suspend fun findDeclinations(@PathVariable word: String) : DeclinationDto {
+    suspend fun findDeclinations(@PathVariable word: String) : List<DeclinationDto> {
         return declinationService.findDeclinations(word)
     }
 }

@@ -35,6 +35,8 @@ dependencies {
     runtimeOnly("org.jetbrains.kotlinx:kotlinx-coroutines-reactor:1.8.0")
     runtimeOnly("org.jetbrains.kotlinx:kotlin-reflect:1.8.0")
     runtimeOnly("org.jetbrains.kotlinx:kotlin-stdlib-jdk8:1.8.0")
+
+    implementation("org.jsoup:jsoup:1.17.2")
 }
 
 tasks.withType<KotlinCompile> {
