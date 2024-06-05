@@ -27,6 +27,7 @@ repositories {
 
 val ktorVersion: String by project
 val jsoupVersion: String by project
+val kloggingVersion: String by project
 val kotlinCoroutinesVersion: String by project
 
 dependencies {
@@ -34,7 +35,9 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-webflux")
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
     implementation("org.jetbrains.kotlin:kotlin-reflect")
+    implementation("io.klogging:klogging-jvm:$kloggingVersion")
     testImplementation("org.springframework.boot:spring-boot-starter-test")
+    testImplementation("org.assertj:assertj-core:3.25.1")
     implementation("io.ktor:ktor-client-core:$ktorVersion")
     implementation("io.ktor:ktor-client-cio:$ktorVersion")
     implementation("io.ktor:ktor-client-logging:$ktorVersion")
