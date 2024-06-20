@@ -6,6 +6,7 @@ import io.ktor.client.statement.*
 import io.plakhov.wiki.dictionary.parser.dto.DeclinationDto
 import io.plakhov.wiki.dictionary.parser.dto.DeclinationResponseDto
 import org.jsoup.Jsoup
+import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import org.jsoup.nodes.TextNode
 import org.springframework.beans.factory.annotation.Value
@@ -20,12 +21,11 @@ class DeclinationServiceImpl(
 
     companion object {
         const val DECLINATION_TABLE_CSS_QUERY = "table.morfotable.ru"
-        const val DECLINATION_DEFINITION_CSS_QUERY = "p:contains(Зализняк)"
-        const val REGEX_BRACKET = "\\((.*?)\\)"
+        const val REGEX_BRACKET = "\\((.*)\\)"
         const val REGEX_DIGIT = ".*\\d.*"
     }
 
-    val REGEX_PATTERN_BRACKET = Pattern.compile(REGEX_BRACKET)
+    val regexPatternBracket = Pattern.compile(REGEX_BRACKET)!!
 
     @Value("\${wiki.dictionary.baseUri}")
     private lateinit var baseUri: String
@@ -42,36 +42,67 @@ class DeclinationServiceImpl(
         val httpResponse = httpClient.get(baseUri + word).bodyAsText()
         val parsedResponse = Jsoup
             .parse(httpResponse)
-        val result = parsedResponse.select(DECLINATION_TABLE_CSS_QUERY).map { element ->
-            element.childNode(BigDecimal.ONE.toInt())
-                .childNodes()
-                .asSequence()
-                .filterIsInstance<Element>()
-                .drop(BigDecimal.ONE.toInt())
-                .map {
-                    it.childNodes().filterIsInstance<Element>()
-                }
-                .filter {
-                    it.size == 3
-                }
-                .map {
-                    DeclinationDto(
-                        it[0].childNodes().filterIsInstance<Element>().first().attribute("title").value.trim(),
-                        it[1].childNodes().filterIsInstance<TextNode>().first().text().trim(),
-                        it[2].childNodes().filterIsInstance<TextNode>().first().text().trim()
-                    )
-                }
-                .toList()
-        }.filter { it.size == 6 }
-        val definitionDeclination = parsedResponse.select(DECLINATION_DEFINITION_CSS_QUERY)
-        return result.mapIndexed { index, declinationDtos ->
-            val definition = definitionDeclination[index]
-            var typeOfDeclination = ""
-            val matcher = REGEX_PATTERN_BRACKET.matcher(definition.text())
-            if (matcher.find()) {
-                typeOfDeclination = matcher.group().split(" ").find { it.matches(REGEX_DIGIT.toRegex()) } ?: ""
+        val morfoTables = findMorfoTables(parsedResponse)
+        val definitionDeclinations = findDefinitionDeclination(parsedResponse)
+        return morfoTableToDeclinationDto(morfoTables).mapIndexed { index, declinationDtos ->
+            val definition = definitionDeclinations[index]
+            DeclinationResponseDto(definition.first, definition.second, declinationDtos)
+        }
+    }
+
+    private suspend fun findMorfoTables(parsedResponse: Document): List<List<List<Element>>> {
+        return parsedResponse.select(DECLINATION_TABLE_CSS_QUERY)
+            .sortedBy { it.siblingIndex() }
+            .map { element ->
+                element.childNode(BigDecimal.ONE.toInt())
+                    .childNodes()
+                    .asSequence()
+                    .filterIsInstance<Element>()
+                    .drop(BigDecimal.ONE.toInt())
+                    .map {
+                        it.childNodes().filterIsInstance<Element>()
+                    }
+                    .filter {
+                        it.size == 3
+                    }.toList()
+            }.filter { it.size >= 6 }
+    }
+
+    private fun morfoTableToDeclinationDto(morfoTables: List<List<List<Element>>>): List<List<DeclinationDto>> {
+        return morfoTables.map { table ->
+            table.map {
+                DeclinationDto(
+                    it[0].childNodes().filterIsInstance<Element>().first().attribute("title").value.trim(),
+                    it[1].childNodes().filterIsInstance<TextNode>().first().text().trim(),
+                    it[2].childNodes().filterIsInstance<TextNode>().first().text().trim()
+                )
             }
-            DeclinationResponseDto(definition.text(), typeOfDeclination, declinationDtos)
+        }
+    }
+
+    //first - morphologicalDescription
+    //second - typeOfDeclination
+    private suspend fun findDefinitionDeclination(parsedResponse: Document): List<Pair<String, String>> {
+        return DescriptionType.entries.flatMap { typeOfDescription ->
+            parsedResponse.select(typeOfDescription.cssQuery).asIterable().toList().map {
+                it to parseTypeOfDeclinations(typeOfDescription, it)
+            }
+        }.sortedBy { it.first.siblingIndex() }.map { Pair(it.second, it.first.text()) }
+    }
+
+    private fun parseTypeOfDeclinations(descriptionType: DescriptionType, description: Element): String {
+        return when (descriptionType) {
+            DescriptionType.ZALIZNYAK -> {
+                val matcher = regexPatternBracket.matcher(description.text())
+                if (matcher.find()) {
+                    matcher.group().split(" ").find { it.matches(REGEX_DIGIT.toRegex()) } ?: ""
+                } else {
+                    ""
+                }
+            }
+
+            DescriptionType.SCHEMA -> description.text().split(" ").find { it.matches(REGEX_DIGIT.toRegex()) }
+                ?.replace(":", "") ?: ""
         }
     }
 }
