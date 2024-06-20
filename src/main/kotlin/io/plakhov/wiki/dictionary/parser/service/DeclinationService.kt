@@ -1,9 +1,8 @@
 package io.plakhov.wiki.dictionary.parser.service
 
-import io.plakhov.wiki.dictionary.parser.dto.DeclinationDto
-import io.plakhov.wiki.dictionary.parser.dto.DeclinationResponseDto
+import io.plakhov.wiki.dictionary.parser.dto.DeclensionResponseDto
 
-interface DeclinationService {
-    suspend fun findFirstDeclinations(word: String) : DeclinationResponseDto
-    suspend fun findAllDeclinations(word: String) : List<DeclinationResponseDto>
+interface DeclensionService {
+    suspend fun findFirstDeclensions(word: String): DeclensionResponseDto
+    suspend fun findAllDeclensions(word: String): List<DeclensionResponseDto>
 }

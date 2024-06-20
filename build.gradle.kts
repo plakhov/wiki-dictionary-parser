@@ -29,6 +29,7 @@ val ktorVersion: String by project
 val jsoupVersion: String by project
 val kloggingVersion: String by project
 val kotlinCoroutinesVersion: String by project
+val kotlinVersion: String by project
 
 dependencies {
     implementation("org.springframework.boot:spring-boot-starter-web")
@@ -42,6 +43,7 @@ dependencies {
     implementation("io.ktor:ktor-client-cio:$ktorVersion")
     implementation("io.ktor:ktor-client-logging:$ktorVersion")
     implementation("org.jsoup:jsoup:$jsoupVersion")
+    implementation("org.jetbrains.kotlin:kotlin-test:$kotlinVersion")
 
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:$kotlinCoroutinesVersion")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactor:$kotlinCoroutinesVersion")

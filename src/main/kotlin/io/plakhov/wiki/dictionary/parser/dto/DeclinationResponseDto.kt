@@ -1,8 +1,8 @@
 package io.plakhov.wiki.dictionary.parser.dto
 
-data class DeclinationResponseDto(
+data class DeclensionResponseDto(
     val morphologicalDescription: String,
-    val typeOfDeclination: String,
-    val declinations: List<DeclinationDto>
+    val typeOfDeclension: String,
+    val Declensions: List<DeclensionDto>
 ) {
 }
